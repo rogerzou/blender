@@ -19,9 +19,11 @@ my %both_starts;
 my $verbose = 0;
 my $debug = 0;
 my $pams   = "GG,AG";
+my $nuclease = "Cas9";
 my $threshold = 3;
 GetOptions ("c=i" => \$threshold,    # numeric
             "p=s"   => \$pams,
+            "n=s"   => \$nuclease,  # Cas9 vs Cas12
             "debug"    => \$debug,     # flag
 	    "no_guide" => \$no_guide,  # flag
             "verbose"  => \$verbose)   # flag
@@ -67,11 +69,14 @@ if ($verbose) {
 
 # Set blacklist and chromosome list from genome, assumes mm10 and hg38 and 
 # that "mm10" is in name of reference genome
-if ($genome =~ /mm10/) {
+if ($genome =~ /mm10/) {            # if mm10
     $blacklist_file = "./mm10.blacklist.bed";
     @chroms = (1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,"X","Y");
-} else { # assume human
+} elsif ($genome =~ /hg38/) {        # if hg38
     $blacklist_file = "./hg38.blacklist.bed";
+    @chroms = (1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,"X","Y");
+} elsif ($genome =~ /hg19/) {        # if hg19
+    $blacklist_file = "./hg19.blacklist.bed";
     @chroms = (1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,"X","Y");
 }
 
@@ -157,7 +162,15 @@ foreach $i (@chroms) {
 		    }
 		}
 		if (!$over_max) {
-    	            my $s = $start - 2; my $e = $start + 17;
+            if ($nuclease eq "Cas9") {          # if PAM is left for Cas9 (PAM on right for Cpf1), set start/end coords
+                $s = $start - 2; $e = $start + 17;
+                $Npamleft = "N$pamleft";
+            } elsif ($nuclease eq "Cpf1" || $nuclease eq "Cas12") {
+                $s = $start - 4; $e = $start + 15;
+                $Npamleft = $pamleft . 'N';
+            } else {
+                print "ERROR NUCLEASE NOT Cas9 or Cpf1/Cas12\n";
+            }
     		    my $guide = get_guide($c,$s,$e);
     		    my $sum = add_window($start,5);
 		    if ($sum < $min_discoscore) { next;} 
@@ -165,12 +178,12 @@ foreach $i (@chroms) {
 		    my $mm = guide_mm($input_guide,$guide);
 		    if ($check_guide)  {
 			if ($mm <= $max_mismatches) {
-    	                    print "$c:$s-$e\t$start\t$sum\t$both_starts{$start}\tantisense\tN$pamleft\t$guide\t$mm\n";
+    	                    print "$c:$s-$e\t$start\t$sum\t$both_starts{$start}\tantisense\t$Npamleft\t$guide\t$mm\n";
 			} else {
-    	                    if ($verbose) {print "$c:$s-$e\t$start\t$sum\t$both_starts{$start}\tantisense\tN$pamleft\t$guide FILTERED: $mm mismatches\n";}
+    	                    if ($verbose) {print "$c:$s-$e\t$start\t$sum\t$both_starts{$start}\tantisense\t$Npamleft\t$guide FILTERED: $mm mismatches\n";}
 			}
     		    } else {
-    	                print "$c:$s-$e\t$start\t$sum\t$both_starts{$start}\tantisense\tN$pamleft\t$guide\t$mm\n";
+    	                print "$c:$s-$e\t$start\t$sum\t$both_starts{$start}\tantisense\t$Npamleft\t$guide\t$mm\n";
 		    }
 		}
     	    }
@@ -186,6 +199,13 @@ foreach $i (@chroms) {
 		    }
 		}
 		if (!$over_max) {
+            if ($nuclease eq "Cas9") {          # if PAM is right for Cas9 (PAM on left for Cpf1), set start/end coords
+                $Npamright = "N$pamright";
+            } elsif ($nuclease eq "Cpf1" || $nuclease eq "Cas12") {
+                $Npamright = $pamright . 'N';
+            } else {
+                print "ERROR NUCLEASE NOT Cas9 or Cpf1/Cas12\n";
+            }
     	            $e = $start + 3; $s = $start - 16;
     		    $guide = get_guide($c,$s,$e);
     		    $sum = add_window($start,5);
@@ -193,13 +213,13 @@ foreach $i (@chroms) {
 		    my $mm = guide_mm($input_guide,$guide);
 		    if ($check_guide)  { # guide was given as input parameter
 			if ($mm <= $max_mismatches) {
-    	                    print "$c:$s-$e\t$start\t$sum\t$both_starts{$start}\tsense\tN$pamright\t$guide\t$mm\n";
+    	                    print "$c:$s-$e\t$start\t$sum\t$both_starts{$start}\tsense\t$Npamright\t$guide\t$mm\n";
 			} else {
-    	                    if ($verbose) {print "$c:$s-$e\t$start\t$sum\t$both_starts{$start}\tsense\tN$pamright\t$guide FILTERED: $mm mismatches\n";}
+    	                    if ($verbose) {print "$c:$s-$e\t$start\t$sum\t$both_starts{$start}\tsense\t$Npamright\t$guide FILTERED: $mm mismatches\n";}
 		 	    next;
 			}
 		    } else {
-    	                print "$c:$s-$e\t$start\t$sum\t$both_starts{$start}\tsense\tN$pamright\t$guide\t$mm\n";
+    	                print "$c:$s-$e\t$start\t$sum\t$both_starts{$start}\tsense\t$Npamright\t$guide\t$mm\n";
 		    }
 		}
     	    }
@@ -210,9 +230,15 @@ foreach $i (@chroms) {
 sub check_pam_left {
     my ($chr,$x) = @_;
     my $ref_pam = "";
-    $s = $x-5; $e = $x-4;
+    if ($nuclease eq "Cas9") {          # if PAM is left for Cas9 (PAM on right for Cpf1)
+        $s = $x-5; $e = $x-4;
+    } elsif ($nuclease eq "Cpf1" || $nuclease eq "Cas12") {
+        $s = $x+17; $e=$x+19;
+    } else {
+        print "ERROR NUCLEASE NOT Cas9 or Cpf1/Cas12\n";
+    }
     my $coords = $chr.":".$s."-".$e;
-    
+
     open(F,"samtools faidx $genome $coords  | ") || die "Couldnt open $!";
     while (<F>) {
 	if (/^>/) { next; }
@@ -233,7 +259,13 @@ sub check_pam_right {
     my ($chr,$x) = @_;
     
     my $ref_pam = "";
-    $s = $x+5; $e = $x+6;
+    if ($nuclease eq "Cas9") {          # if PAM is right for Cas9 (PAM on left for Cpf1)
+        $s = $x+5; $e = $x+6;
+    } elsif ($nuclease eq "Cpf1" || $nuclease eq "Cas12") {
+        $s = $x-20; $e=$x-18;
+    } else {
+        print "ERROR NUCLEASE NOT Cas9 or Cpf1/Cas12\n";
+    }
     $coords = $chr.":".$s."-".$e;
     open(F,"samtools faidx $genome $coords  | ") || die "Couldnt open $!";
     while (<F>) {

@@ -11,28 +11,6 @@ GUIDE=$4
 OUTDIR=$5
 OPT=$6
 
-if [ ! -e $IP ] 
-then
-    echo "$IP does not exist"
-    exit
-fi
-if [ ! -e $CTRL ] 
-then
-    echo "$CTRL does not exist"
-    exit
-fi
-    
-if [ ! -d $OUTDIR ] 
-then
-   mkdir $OUTDIR
-fi
-
-perl blender.pl $OPT $REF $GUIDE  $IP $CTRL > $OUTDIR/unfiltered_blender_hits.txt
-
-# For pooled samples, comment out the next line and uncomment the filter_pool.pl line
-perl filter.pl $OUTDIR/unfiltered_blender_hits.txt > $OUTDIR/filtered_blender_hits.txt
-#perl filter_pool.pl $OUTDIR/unfiltered_blender_hits.txt > $OUTDIR/filtered_pooled_blender_hits.txt
-
 # Add PAM to guide for visualization (location of Cpf1 should be on other side..TODO need to fix in draw_blender_fig.py
 if [[ "$OPT" == *"Cas9"* ]]; then
     GUIDE="${GUIDE}NGG"
