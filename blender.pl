@@ -29,6 +29,9 @@ GetOptions ("c=i" => \$threshold,    # numeric
             "verbose"  => \$verbose)   # flag
   or die("USAGE: perl blender.pl [options] <reference genome> <guide sequence> <edited bam> <control bam>\n");
 
+print "Nuclease: $nuclease\n";
+print "PAMs: $pams\n";
+
 $control_bam = "";
 if (!$no_guide) {
     if ($#ARGV < 3) { print "Missing argument $#ARGV \n"; exit; }
@@ -151,7 +154,7 @@ foreach $i (@chroms) {
 	    $pamleft = check_pam_left($c,$start);
 	    $pamright = check_pam_right($c,$start);
 
-    	    if ($pamleft) { 
+    	    if ($pamleft) {
                 $d = `samtools depth -r $l $edited_bam`;
 	        chomp($d);
 	        ($x,$y,$depth) = split(/\t/,$d);
@@ -233,12 +236,16 @@ sub check_pam_left {
     if ($nuclease eq "Cas9") {          # if PAM is left for Cas9 (PAM on right for Cpf1)
         $s = $x-5; $e = $x-4;
     } elsif ($nuclease eq "Cpf1" || $nuclease eq "Cas12") {
-        $s = $x+17; $e=$x+19;
+        $s = $x+17; $e = $x+19;
     } else {
         print "ERROR NUCLEASE NOT Cas9 or Cpf1/Cas12\n";
     }
     my $coords = $chr.":".$s."-".$e;
-
+    # covers edge case where start of read is so early leading to querying coordinates < 0
+    if ($s < 0 || $e < 0) {
+        if ($verbose){print "check_pam_left(): Start coord is $x\n. PAM check $s-$e is out of bounds.";}
+        return "";
+    }
     open(F,"samtools faidx $genome $coords  | ") || die "Couldnt open $!";
     while (<F>) {
 	if (/^>/) { next; }
@@ -262,11 +269,16 @@ sub check_pam_right {
     if ($nuclease eq "Cas9") {          # if PAM is right for Cas9 (PAM on left for Cpf1)
         $s = $x+5; $e = $x+6;
     } elsif ($nuclease eq "Cpf1" || $nuclease eq "Cas12") {
-        $s = $x-20; $e=$x-18;
+        $s = $x-20; $e = $x-18;
     } else {
         print "ERROR NUCLEASE NOT Cas9 or Cpf1/Cas12\n";
     }
     $coords = $chr.":".$s."-".$e;
+    # covers edge case where start of read is so early leading to querying coordinates < 0
+    if ($s < 0 || $e < 0) {
+        if ($verbose){print "check_pam_right(): Start coord is $x\n. PAM check $s-$e is out of bounds.";}
+        return "";
+    }
     open(F,"samtools faidx $genome $coords  | ") || die "Couldnt open $!";
     while (<F>) {
 	chomp;

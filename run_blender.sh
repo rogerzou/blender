@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Stacia Wyman 22 July 2019
 # Bash script to run BLENDER
 
@@ -34,11 +34,5 @@ perl filter.pl $OUTDIR/unfiltered_blender_hits.txt > $OUTDIR/filtered_blender_hi
 #perl filter_pool.pl $OUTDIR/unfiltered_blender_hits.txt > $OUTDIR/filtered_pooled_blender_hits.txt
 
 # Add PAM to guide for visualization (location of Cpf1 should be on other side..TODO need to fix in draw_blender_fig.py
-if [[ "$OPT" == *"Cas9"* ]]; then
-    GUIDE="${GUIDE}NGG"
-elif [[ "$OPT" == *"Cpf1"* ]]; then
-    GUIDE="${GUIDE}TTTN"
-elif [[ "$OPT" == *"Cas12"* ]]; then
-    GUIDE="${GUIDE}TTTN"
-fi
+GUIDE+="NGG"
 python draw_blender_fig.py $OUTDIR/filtered_blender_hits.txt $OUTDIR/blender_hits $GUIDE 
