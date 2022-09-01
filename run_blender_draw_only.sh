@@ -11,12 +11,7 @@ GUIDE=$4
 OUTDIR=$5
 OPT=$6
 
-# Add PAM to guide for visualization (location of Cpf1 should be on other side..TODO need to fix in draw_blender_fig.py
-if [[ "$OPT" == *"Cas9"* ]]; then
-    GUIDE="${GUIDE}NGG"
-elif [[ "$OPT" == *"Cpf1"* ]]; then
-    GUIDE="${GUIDE}TTTN"
-elif [[ "$OPT" == *"Cas12"* ]]; then
-    GUIDE="${GUIDE}TTTN"
-fi
+# Add PAM to guide for visualization (TODO location of Cpf1 PAM should be on other side)
+GUIDE="${GUIDE}NGG"
+#GUIDE="${GUIDE}TTTN"
 python draw_blender_fig.py $OUTDIR/filtered_blender_hits.txt $OUTDIR/blender_hits $GUIDE 

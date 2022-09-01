@@ -29,8 +29,8 @@ GetOptions ("c=i" => \$threshold,    # numeric
             "verbose"  => \$verbose)   # flag
   or die("USAGE: perl blender.pl [options] <reference genome> <guide sequence> <edited bam> <control bam>\n");
 
-print "Nuclease: $nuclease\n";
-print "PAMs: $pams\n";
+# print "Nuclease: $nuclease\n";
+# print "PAMs: $pams\n";
 
 $control_bam = "";
 if (!$no_guide) {

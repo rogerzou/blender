@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 # Stacia Wyman 22 July 2019
 # Bash script to run BLENDER
 
@@ -33,6 +33,7 @@ perl blender.pl $OPT $REF $GUIDE  $IP $CTRL > $OUTDIR/unfiltered_blender_hits.tx
 perl filter.pl $OUTDIR/unfiltered_blender_hits.txt > $OUTDIR/filtered_blender_hits.txt
 #perl filter_pool.pl $OUTDIR/unfiltered_blender_hits.txt > $OUTDIR/filtered_pooled_blender_hits.txt
 
-# Add PAM to guide for visualization (location of Cpf1 should be on other side..TODO need to fix in draw_blender_fig.py
-GUIDE+="NGG"
-python draw_blender_fig.py $OUTDIR/filtered_blender_hits.txt $OUTDIR/blender_hits $GUIDE 
+# Add PAM to guide for visualization (TODO location of Cpf1 PAM should be on other side)
+GUIDE="${GUIDE}NGG"
+#GUIDE="${GUIDE}TTTN"
+python draw_blender_fig.py $OUTDIR/filtered_blender_hits.txt $OUTDIR/blender_hits $GUIDE
