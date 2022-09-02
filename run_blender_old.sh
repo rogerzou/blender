@@ -13,18 +13,18 @@ OPT=$6
 
 if [ ! -e $IP ] 
 then
-	echo "$IP does not exist"
-	exit
+	    echo "$IP does not exist"
+	        exit
 fi
 if [ ! -e $CTRL ] 
 then
-	echo "$CTRL does not exist"
-	exit
+	    echo "$CTRL does not exist"
+	        exit
 fi
     
 if [ ! -d $OUTDIR ] 
 then
-	mkdir $OUTDIR
+	   mkdir $OUTDIR
 fi
 
 perl blender.pl $OPT $REF $GUIDE  $IP $CTRL > $OUTDIR/unfiltered_blender_hits.txt
@@ -37,4 +37,3 @@ perl filter.pl $OUTDIR/unfiltered_blender_hits.txt > $OUTDIR/filtered_blender_hi
 GUIDE="${GUIDE}NGG"
 #GUIDE="${GUIDE}TTTN"
 python draw_blender_fig.py $OUTDIR/filtered_blender_hits.txt $OUTDIR/blender_hits $GUIDE
-
